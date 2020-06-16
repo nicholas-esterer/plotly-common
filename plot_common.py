@@ -5,6 +5,7 @@ import numpy as np
 import plotly.graph_objects as go
 import skimage.util
 from plotly.utils import ImageUriValidator
+import re
 
 
 def path_to_img_ndarray(path):
@@ -55,8 +56,23 @@ def dummy_fig():
     return fig
 
 
+def _type_b64_if_uri(s):
+    repat='data:image/([^;]*);base64,(.*$)'
+    m=re.match(repat,s)
+    if m is not None:
+        return m.groups()
+    return None
+
+
 def _pilim_if_path(im):
+    """ If im is uri, parses out the base64 encoded data and returns that as a
+    pil image, if it is just a path, loads the image at path into the pil image.
+    """
     if type(im) == type(str()):
+        groups=_type_b64_if_uri(im)
+        if groups is not None:
+            decoded_img = base64.b64decode(groups[1])
+            return str_to_pil_img(decoded_img)
         return PIL.Image.open(im)
     return im
 
