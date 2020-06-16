@@ -57,8 +57,8 @@ def dummy_fig():
 
 
 def _type_b64_if_uri(s):
-    repat='data:image/([^;]*);base64,(.*$)'
-    m=re.match(repat,s)
+    repat = "data:image/([^;]*);base64,(.*$)"
+    m = re.match(repat, s)
     if m is not None:
         return m.groups()
     return None
@@ -69,7 +69,7 @@ def _pilim_if_path(im):
     pil image, if it is just a path, loads the image at path into the pil image.
     """
     if type(im) == type(str()):
-        groups=_type_b64_if_uri(im)
+        groups = _type_b64_if_uri(im)
         if groups is not None:
             decoded_img = base64.b64decode(groups[1])
             return str_to_pil_img(decoded_img)
@@ -77,11 +77,28 @@ def _pilim_if_path(im):
     return im
 
 
-def add_layout_images_to_fig(fig, images, update_ranges=True):
+def _rep_if_not_list(a, n):
+    if type(a) != type(list()):
+        return [a for _ in range(n)]
+    return a
+
+
+def add_layout_images_to_fig(
+    fig,
+    images,
+    update_ranges=True,
+    img_args={"layer": "below"},
+    width_scale=1,
+    height_scale=1,
+    update_figure_dims=None,
+):
     """ images is a sequence of PIL Image objects """
     if len(images) <= 0:
         return fig
-    for im in images:
+    img_args = _rep_if_not_list(img_args, len(images))
+    width_scale = _rep_if_not_list(width_scale, len(images))
+    height_scale = _rep_if_not_list(height_scale, len(images))
+    for im, args, ws, hs in zip(images, img_args, width_scale, height_scale):
         # if image is a path to an image, load the image to get its size
         width, height = _pilim_if_path(im).size
         # Add images
@@ -92,15 +109,21 @@ def add_layout_images_to_fig(fig, images, update_ranges=True):
                 yref="y",
                 x=0,
                 y=0,
-                sizex=width,
-                sizey=height,
+                sizex=width * ws,
+                sizey=height * hs,
                 sizing="contain",
-                layer="below",
+                **args
             )
         )
     if update_ranges:
         width, height = [
-            max([_pilim_if_path(im).size[i] for im in images]) for i in range(2)
+            max(
+                [
+                    _pilim_if_path(im).size[i] * s[i]
+                    for im, s in zip(images, zip(width_scale, height_scale))
+                ]
+            )
+            for i in range(2)
         ]
         # TODO showgrid,showticklabels,zeroline should be passable to this
         # function
@@ -114,6 +137,16 @@ def add_layout_images_to_fig(fig, images, update_ranges=True):
             showticklabels=False,
             zeroline=False,
         )
+        if update_figure_dims is not None:
+            if update_figure_dims == "height":
+                fig.update_layout(height=height)
+            elif update_figure_dims == "width":
+                fig.update_layout(width="width")
+            else:
+                raise ValueError(
+                    'bad value for update_figure_dims, must be None, "width" or "height", got %s'
+                    % (update_figure_dims,)
+                )
     return fig
 
 
