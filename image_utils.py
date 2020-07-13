@@ -36,5 +36,12 @@ def label_to_colors(
         (cimg, alpha), axis=len(cimg.shape)-1
     )
 
-
-
+def combine_last_dim(
+    img,
+    output_n_dims=3,
+    combiner=lambda x: (np.sum(np.abs(x),axis=-1)!=0).astype('float')
+):
+    if len(img.shape)==output_n_dims:
+        return img
+    imgout=combiner(img)
+    return imgout
