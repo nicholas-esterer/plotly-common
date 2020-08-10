@@ -13,6 +13,7 @@ def label_to_colors(
     alpha=128,
     color_class_offset=0,
     labels_contiguous=False,
+    no_map_zero=False,
 ):
     """
     Take a tensor containing integers representing labels and return an dim0x...dim(D-1)x4
@@ -29,6 +30,8 @@ def label_to_colors(
     labels_contiguous=True can be set and this will iterate from the smallest
     through the greatest label, otherwise this iterates through the set of
     labels as determined from img.
+    if no_map_zero is True, then label 0 is not mapped (its items are left as
+    [0,0,0,0] in the output)
     """
     colormap = [
         tuple([fromhex(h[s : s + 2]) for s in range(0, len(h), 2)])
@@ -44,6 +47,8 @@ def label_to_colors(
     else:
         labels = set(img.flatten())
     for c in labels:
+        if (c == 0) and no_map_zero:
+            continue
         cimg[img == c], alpha[img == c] = cm_alpha[
             (c + color_class_offset) % len(colormap)
         ]
