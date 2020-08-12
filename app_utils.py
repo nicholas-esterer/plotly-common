@@ -1,12 +1,13 @@
 from os import environ
 
-def get_env(name,default=None,conv=None,check_if_none=False):
+
+def get_env(name, default=None, conv=None, check_if_none=False):
     try:
-        ret=environ[name]
+        ret = environ[name]
     except KeyError:
-        ret=default
+        ret = default
         if check_if_none and ret is None:
-                raise Exception("Specify " + name + ".")
+            raise Exception("Specify " + name + ".")
         return ret
     if conv is not None:
         return conv(ret)
